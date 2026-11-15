@@ -1,5 +1,7 @@
 .env
 .venv/
 instance/
+reports/
+private-audits/
 __pycache__/
 *.py[cod]

@@ -39,12 +39,23 @@ def _genres(value):
     return sorted({str(item).strip().casefold() for item in parsed if str(item).strip()})
 
 
-def _read_dataset(path):
-    with Path(path).open(encoding="latin1", newline="") as source:
-        reader = csv.DictReader(source)
-        if not reader.fieldnames or not set(FIELDS).issubset(reader.fieldnames):
-            raise ValueError("The catalog file is missing required columns.")
-        return [{"_source_record": number, **row} for number, row in enumerate(reader, start=1)]
+def _read_dataset(path, max_rows=None):
+    def read(encoding):
+        with Path(path).open(encoding=encoding, newline="") as source:
+            reader = csv.DictReader(source)
+            if not reader.fieldnames or not set(FIELDS).issubset(reader.fieldnames):
+                raise ValueError("The catalog file is missing required columns.")
+            rows = []
+            for number, row in enumerate(reader, start=1):
+                if max_rows is not None and number > max_rows:
+                    raise ValueError(f"The catalog file exceeds the {max_rows:,}-row limit.")
+                rows.append({"_source_record": number, **row})
+            return rows
+
+    try:
+        return read("utf-8-sig")
+    except UnicodeDecodeError:
+        return read("latin1")
 
 
 def _profile(rows):

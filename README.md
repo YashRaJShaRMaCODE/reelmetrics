@@ -1,10 +1,14 @@
 # Catalog Quality Lab
 
-A deployable data quality workbench for the bundled Netflix titles snapshot. It profiles record completeness, surfaces questionable rows in a searchable review queue, and exports normalized data for follow-on analysis.
+A data-quality workbench demo for a bundled movie and TV catalog snapshot. It profiles record completeness, surfaces questionable rows in a searchable review queue, and exports normalized data for follow-on analysis.
 
 This is an independent portfolio project. It does not connect to Netflix or another streaming service, and it does not report current availability or viewing behavior.
 
-**Live dashboard:** <https://catalog-quality-lab.vercel.app/>
+**Live demo dashboard:** <https://catalog-quality-lab.vercel.app/>
+
+## Product direction
+
+The most credible commercial path is a scoped catalog-data audit and cleanup service for small media catalogs: profile a customer-provided export, return a flagged-record report, and provide a cleaned CSV for review. The live dashboard remains a fixed-dataset demo; it has no customer upload, accounts, team workspace, or subscription billing. For private customer work, use the local CLI below so files stay on the operator's computer. Validate demand and data rights before offering paid work or building a recurring SaaS.
 
 ## What it does
 
@@ -32,6 +36,16 @@ python app.py
 
 Open `http://127.0.0.1:5000`. Set `PORT` to change the listening port. The app reads the checked-in CSV at startup and does not require a database, account, API key, or external asset host.
 
+## Audit a customer file privately
+
+The CLI reads and writes files only on your computer; it makes no network requests and does not send the CSV to the live demo. Start from [`examples/catalog-template.csv`](examples/catalog-template.csv) for the required 15 headers. UTF-8 (including BOM-marked files) and legacy Latin-1 CSVs are supported. Inputs are limited to 100 MiB and 100,000 records:
+
+```powershell
+python audit_catalog.py --input .\private-audits\customer-catalog.csv --output-dir .\private-audits\reports
+```
+
+It creates `audit.json` (machine-readable metrics and source-file hash), `summary.md` (a shareable aggregate-only quality report), `clean.csv`, and `review.csv`. The Markdown report excludes customer row values. Existing report files are protected; pass `--force` only when you intend to replace them. Treat the CSV exports as confidential customer data and store them outside source control. The `reports/` and `private-audits/` folders are git-ignored as an extra safeguard.
+
 ## Routes
 
 - `/` — dataset quality dashboard
@@ -47,12 +61,12 @@ python -m unittest discover -s tests
 python -m compileall -q app.py tests
 ```
 
-The tests use a temporary fixture CSV and do not modify the bundled dataset. Node tests cover decision validation, filtering, progress counts, bulk updates, and the public-field-only export.
+The tests use temporary fixture CSVs and do not modify the bundled dataset. CLI tests cover local report generation, overwrite protection, schema and size limits, and spreadsheet formula safety. Node tests cover decision validation, filtering, progress counts, bulk updates, and the public-field-only export.
 GitHub Actions runs the tests, Python compilation, review workflow tests, and a dependency security audit on pushes and pull requests to `main`.
 
 ## Data notes
 
-The repository includes titles and credits CSVs plus SQL analysis material. The dashboard uses the titles CSV only. The source file has 5,850 rows and includes title/type, descriptions, year, genres, countries, certification, runtime, seasons, and IMDb/TMDb fields. Its recorded years span 1945–2022. Figures are computed from the checked-in snapshot, not a live feed. The data source and its terms should be checked before redistribution of the raw files; this project license does not claim ownership of the dataset.
+The repository includes titles and credits CSVs plus SQL analysis material. The dashboard uses the titles CSV only. The source file has 5,850 rows and includes title/type, descriptions, year, genres, countries, certification, runtime, seasons, and IMDb/TMDb fields. Its recorded years span 1945–2022. Figures are computed from the checked-in snapshot, not a live feed. The snapshot contains catalog metadata, not viewer-level behavior or demographics. Confirm the source and redistribution terms before using these files in a commercial service; this project license does not claim ownership of the dataset.
 
 ## Deployment
 
@@ -64,4 +78,4 @@ gunicorn app:app
 
 The runtime dependency is listed in `requirements.txt`.
 
-Static files live in `public/static/` so Vercel can serve them directly at `/static/`; local and Render runs use the same files through Flask. `render.yaml` keeps the Render Blueprint configuration available. Set `PUBLIC_BASE_URL` only if the canonical production domain changes.
+Static files live in `public/static/` so Vercel can serve them directly at `/static/`; local and Render runs use the same files through Flask. `render.yaml` keeps the Render Blueprint configuration available. Set `PUBLIC_BASE_URL` only if the canonical production domain changes. The linked Vercel plan was not verified. Vercel's current terms restrict Hobby use to personal or non-commercial projects, so confirm the project's plan and move to an allowed commercial plan before using Vercel for paid service.
