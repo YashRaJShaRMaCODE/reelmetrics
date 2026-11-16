@@ -68,6 +68,25 @@ class QualityLabTests(unittest.TestCase):
         root = ElementTree.fromstring(sitemap.data)
         self.assertEqual(root[0][0].text, "https://catalog-quality-lab.vercel.app/")
 
+    def test_leadhub_signup_requires_https_and_sends_only_opted_in_email(self):
+        app = create_app({
+            "TESTING": True,
+            "TITLES_CSV": str(self.titles),
+            "LEADHUB_BASE_URL": "https://leadhub.example/",
+        })
+        response = app.test_client().get("/")
+        self.assertIn(b'data-endpoint="https://leadhub.example/api/subscribe"', response.data)
+        self.assertIn("connect-src 'self' https://leadhub.example", response.headers["Content-Security-Policy"])
+        self.assertIn(b"I agree to receive occasional product updates", response.data)
+
+        app = create_app({"TESTING": True, "TITLES_CSV": str(self.titles), "LEADHUB_BASE_URL": "http://leadhub.example"})
+        response = app.test_client().get("/")
+        self.assertNotIn(b'id="lead-form"', response.data)
+        self.assertNotIn("leadhub.example", response.headers["Content-Security-Policy"])
+
+        app = create_app({"TESTING": True, "TITLES_CSV": str(self.titles), "LEADHUB_BASE_URL": "https://leadhub.example/path"})
+        self.assertNotIn(b'id="lead-form"', app.test_client().get("/").data)
+
     def test_clean_download_normalizes_fields_and_excludes_blank_title(self):
         response = self.client.get("/download/clean.csv")
         self.assertEqual(response.status_code, 200)

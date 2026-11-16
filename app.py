@@ -6,6 +6,7 @@ import math
 import os
 from collections import Counter
 from pathlib import Path
+from urllib.parse import urlsplit
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from flask import Flask, Response, render_template, request, send_file
@@ -187,6 +188,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         TITLES_CSV=str(DATASET), MAX_CONTENT_LENGTH=1024 * 1024,
         PUBLIC_BASE_URL=os.environ.get("PUBLIC_BASE_URL", "https://catalog-quality-lab.vercel.app").rstrip("/"),
+        LEADHUB_BASE_URL=os.environ.get("LEADHUB_BASE_URL", "").rstrip("/"),
     )
     if test_config:
         app.config.update(test_config)
@@ -196,6 +198,26 @@ def create_app(test_config=None):
     profile = _profile(rows)
     review_rows = _review_rows(rows)
     review_issue_counts = Counter(code for row in review_rows for code in row["issue_codes"])
+    leadhub_url = app.config["LEADHUB_BASE_URL"]
+    try:
+        parsed_leadhub_url = urlsplit(leadhub_url)
+        valid_leadhub_origin = (
+            parsed_leadhub_url.scheme == "https"
+            and parsed_leadhub_url.hostname
+            and not parsed_leadhub_url.username
+            and not parsed_leadhub_url.password
+            and parsed_leadhub_url.path in {"", "/"}
+            and not parsed_leadhub_url.query
+            and not parsed_leadhub_url.fragment
+        )
+    except ValueError:
+        valid_leadhub_origin = False
+    if valid_leadhub_origin:
+        leadhub_url = f"https://{parsed_leadhub_url.netloc}"
+        leadhub_origin = leadhub_url
+    else:
+        leadhub_url = ""
+        leadhub_origin = ""
 
     @app.after_request
     def security_headers(response):
@@ -203,7 +225,8 @@ def create_app(test_config=None):
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), usb=()")
-        response.headers.setdefault("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
+        connect_src = f"; connect-src 'self' {leadhub_origin}" if leadhub_origin else "; connect-src 'self'"
+        response.headers.setdefault("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" + connect_src)
         return response
 
     @app.get("/")
@@ -228,6 +251,7 @@ def create_app(test_config=None):
             review_sort=sort_by, review_issue_counts=review_issue_counts,
             review_version=review_version,
             public_url=f'{app.config["PUBLIC_BASE_URL"]}/',
+            leadhub_url=leadhub_url,
         )
 
     @app.get("/robots.txt")

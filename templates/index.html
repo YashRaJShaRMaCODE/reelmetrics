@@ -176,8 +176,13 @@
             <div><p class="eyebrow">07 / METHOD &amp; LIMITS</p><h2 id="method-title">Transparent by design.</h2></div>
             <div class="method-copy"><p>The app profiles the CSV bundled in this repository at startup. The source snapshot contains {{ "{:,}".format(profile.count) }} movie and television records; it is not a live service catalog, availability feed, or endorsement by Netflix or another platform.</p><p>Completeness is the share of non-empty cells across {{ profile.columns }} source fields. Genre tags are parsed as lists and normalized to lowercase for the chart and export. The download omits rows without a title, normalizes genre separators, and keeps other missing values blank. Possible duplicates are flagged for review, never silently deleted.</p><p class="source-credit">SOURCE: NETFLIX TITLES + CREDITS DATASET SNAPSHOT · REPOSITORY FILES · RATINGS ATTRIBUTED TO IMDB / TMDB IN SOURCE COLUMNS</p></div>
         </section>
+        <section class="lead-capture" aria-labelledby="lead-title">
+            <div><p class="eyebrow">08 / FIELD NOTES</p><h2 id="lead-title">Catalog quality, without sending your data away.</h2><p>Get occasional notes about private, local-first catalog audits. This form collects only your email after you opt in; never upload client files here.</p></div>
+            {% if leadhub_url %}<form id="lead-form" data-endpoint="{{ leadhub_url }}/api/subscribe"><label for="lead-email">Email address</label><input id="lead-email" name="email" type="email" autocomplete="email" maxlength="254" required><label class="lead-consent"><input name="consent" type="checkbox" required> I agree to receive occasional product updates. I can unsubscribe anytime.</label><button type="submit">Request updates</button><p id="lead-status" role="status" aria-live="polite"></p></form>{% else %}<p class="lead-unavailable">Email signup is not configured yet. Your catalog data stays local.</p>{% endif %}
+        </section>
     </main>
     <footer><span>CATALOG QUALITY LAB <span class="footer-sep">/</span> PERSONAL DATA PROJECT</span><a href="https://github.com/YashRaJShaRMaCODE/business-intelligence-analytics">SOURCE REPOSITORY ↗</a></footer>
     <script type="module" src="/static/review-queue.js"></script>
+    <script defer src="/static/lead-form.js"></script>
 </body>
 </html>
