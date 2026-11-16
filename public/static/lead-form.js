@@ -28,3 +28,35 @@ form?.addEventListener("submit", async (event) => {
     button.disabled = false;
   }
 });
+
+const relatedBox = document.querySelector("#related-products");
+const relatedConsent = document.querySelector("#related-consent");
+const relatedStatus = document.querySelector("#related-status");
+const relatedList = document.querySelector("#related-list");
+
+relatedConsent?.addEventListener("change", async () => {
+  relatedList.replaceChildren();
+  relatedStatus.textContent = "";
+  if (!relatedConsent.checked) return;
+  relatedStatus.textContent = "Loading suggestions…";
+  try {
+    const response = await fetch(`${relatedBox.dataset.endpoint}?project=reelmetrics&consent=true`);
+    const result = await response.json();
+    if (!response.ok) throw new Error("Suggestions unavailable");
+    for (const item of result.items || []) {
+      const url = new URL(item.url);
+      if (url.protocol !== "https:") continue;
+      const entry = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = url.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = item.name;
+      entry.append(link, document.createTextNode(` — ${item.reason}`));
+      relatedList.append(entry);
+    }
+    relatedStatus.textContent = relatedList.childElementCount ? "Our other products" : "No related products are available right now.";
+  } catch {
+    relatedStatus.textContent = "Suggestions are unavailable right now.";
+  }
+});

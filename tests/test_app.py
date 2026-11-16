@@ -78,10 +78,13 @@ class QualityLabTests(unittest.TestCase):
         self.assertIn(b'data-endpoint="https://leadhub.example/api/subscribe"', response.data)
         self.assertIn("connect-src 'self' https://leadhub.example", response.headers["Content-Security-Policy"])
         self.assertIn(b"I agree to receive occasional product updates", response.data)
+        self.assertIn(b'data-endpoint="https://leadhub.example/api/recommendations"', response.data)
+        self.assertIn(b'id="related-consent"', response.data)
 
         app = create_app({"TESTING": True, "TITLES_CSV": str(self.titles), "LEADHUB_BASE_URL": "http://leadhub.example"})
         response = app.test_client().get("/")
         self.assertNotIn(b'id="lead-form"', response.data)
+        self.assertNotIn(b'id="related-products"', response.data)
         self.assertNotIn("leadhub.example", response.headers["Content-Security-Policy"])
 
         app = create_app({"TESTING": True, "TITLES_CSV": str(self.titles), "LEADHUB_BASE_URL": "https://leadhub.example/path"})
