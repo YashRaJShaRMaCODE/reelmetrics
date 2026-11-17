@@ -38,7 +38,7 @@ Open `http://127.0.0.1:5000`. Set `PORT` to change the listening port. The app r
 
 ## Audit a customer file privately
 
-The CLI reads and writes files only on your computer; it makes no network requests and does not send the CSV to the live demo. Start from [`examples/catalog-template.csv`](examples/catalog-template.csv) for the required 15 headers. UTF-8 (including BOM-marked files) and legacy Latin-1 CSVs are supported. Inputs are limited to 100 MiB and 100,000 records:
+The CLI reads and writes files only on your computer; it makes no network requests and does not send the CSV to the live demo. Start from [`examples/catalog-template.csv`](examples/catalog-template.csv) for the required 15 headers. UTF-8 (including BOM-marked files) and legacy Latin-1 CSVs are supported. Duplicate headers are rejected so values cannot silently overwrite one another. Inputs are limited to 100 MiB and 100,000 records:
 
 ```powershell
 python audit_catalog.py --input .\private-audits\customer-catalog.csv --output-dir .\private-audits\reports

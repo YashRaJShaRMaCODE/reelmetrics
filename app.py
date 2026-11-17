@@ -44,7 +44,11 @@ def _read_dataset(path, max_rows=None):
     def read(encoding):
         with Path(path).open(encoding=encoding, newline="") as source:
             reader = csv.DictReader(source)
-            if not reader.fieldnames or not set(FIELDS).issubset(reader.fieldnames):
+            if not reader.fieldnames:
+                raise ValueError("The catalog file is missing required columns.")
+            if len(set(reader.fieldnames)) != len(reader.fieldnames):
+                raise ValueError("The catalog file contains duplicate columns.")
+            if not set(FIELDS).issubset(reader.fieldnames):
                 raise ValueError("The catalog file is missing required columns.")
             rows = []
             for number, row in enumerate(reader, start=1):

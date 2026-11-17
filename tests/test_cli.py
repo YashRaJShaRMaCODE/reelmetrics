@@ -91,6 +91,17 @@ class LocalCatalogAuditTests(unittest.TestCase):
             audit_catalog(self.source, self.output)
         self.assertEqual(list(self.output.iterdir()), [])
 
+    def test_rejects_duplicate_columns_without_creating_reports(self):
+        columns = [*FIELDS, FIELDS[0]]
+        with self.source.open("w", encoding="utf-8", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(columns)
+            writer.writerow(["value"] * len(columns))
+
+        with self.assertRaisesRegex(ValueError, "duplicate columns"):
+            audit_catalog(self.source, self.output)
+        self.assertEqual(list(self.output.iterdir()), [])
+
     def test_enforces_file_and_row_limits(self):
         with patch("audit_catalog.MAX_INPUT_BYTES", 1), self.assertRaisesRegex(ValueError, "exceeds"):
             audit_catalog(self.source, self.output)
